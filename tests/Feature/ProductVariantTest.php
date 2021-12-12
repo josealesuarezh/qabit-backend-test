@@ -42,7 +42,7 @@ class ProductVariantTest extends TestCase
             'product_id' => $product->id
         ]);
 
-        $this->post("api/products/product_variant/$productVariant->id")
+        $this->delete("api/products/product_variant/$productVariant->id")
             ->assertStatus(200)
             ->assertSee('Product Variant deleted successfully');
 

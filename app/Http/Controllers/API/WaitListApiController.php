@@ -14,6 +14,7 @@ class WaitListApiController extends AppBaseController
 {
     public function toggleSubscribe(Request $request){
         $attributes = $request->validate(WaitList::$rules);
+
         if($subscription = WaitList::where($attributes)->first()){
             $subscription->delete();
             return $this->sendSuccess('You have been unsubscribed successfully');
