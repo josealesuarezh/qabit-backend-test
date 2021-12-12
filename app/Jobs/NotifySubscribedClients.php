@@ -36,7 +36,7 @@ class NotifySubscribedClients implements ShouldQueue
     public function handle()
     {
         $available = $this->product->stock;
-        $waitList = WaitList::where($this->product->id,'product_id')->get();
+        $waitList = WaitList::where('product_id',$this->product->id)->get();
         while ($available >= 1 && $waitList->isNotEmpty()){
             $email = $waitList->shift()->email;
             Mail::to($email)->send(new ProductAvailable($this->product));

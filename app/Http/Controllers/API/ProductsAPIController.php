@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
 use App\Models\Products;
+use App\Models\ProductVariant;
 use App\Repositories\ProductsRepository;
+use App\Repositories\ProductVariantRepository;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductsResource;
 use Illuminate\Support\Facades\Response;
@@ -13,15 +15,17 @@ use Illuminate\Support\Facades\Response;
  * Class ProductsController
  * @package App\Http\Controllers\API
  */
-
 class ProductsAPIController extends AppBaseController
 {
     /** @var  ProductsRepository */
     private $productsRepository;
+    private $productVariantRepository;
 
-    public function __construct(ProductsRepository $productsRepo)
+    public function __construct(ProductsRepository $productsRepo, ProductVariantRepository $productVariantRepo)
     {
         $this->productsRepository = $productsRepo;
+        $this->productVariantRepository = $productVariantRepo;
+
     }
 
     /**
@@ -53,10 +57,14 @@ class ProductsAPIController extends AppBaseController
      */
     public function store(Request $request)
     {
-        $this->validate($request,Products::$rules);
-        $input = $request->all();
+        $product = $request->validate(Products::$rules);
+        $variant = $request->validate(ProductVariant::$rules);
 
-        $products = $this->productsRepository->create($input);
+        $products = $this->productsRepository->create($product);
+
+        $products->variants()->create($variant);
+
+        $products->load('variants');
 
         return $this->sendResponse(new ProductsResource($products), 'Products saved successfully');
     }
@@ -73,10 +81,11 @@ class ProductsAPIController extends AppBaseController
     {
         /** @var Products $products */
         $products = $this->productsRepository->find($id);
-
         if (empty($products)) {
             return $this->sendError('Products not found');
         }
+
+        $products->load('variants');
 
         return $this->sendResponse(new ProductsResource($products), 'Products retrieved successfully');
     }
@@ -93,8 +102,8 @@ class ProductsAPIController extends AppBaseController
      */
     public function update($id, Request $request)
     {
-        $this->validate($request,Products::$rules);
-        $input = $request->all();
+
+        $input = $request->validate(Products::$rules);
 
         /** @var Products $products */
         $products = $this->productsRepository->find($id);
@@ -105,6 +114,17 @@ class ProductsAPIController extends AppBaseController
 
         $products = $this->productsRepository->update($input, $id);
 
+        if ($request->has('variantId')){
+            $variantFields = $request->validate(ProductVariant::$rules);
+            $variant = $this->productVariantRepository->find($request->get('variantId'));
+
+            if (empty($variant)) {
+                return $this->sendError('Product variant not found');
+            }
+            $this->productVariantRepository->update($variantFields,$variant->id);
+            $products = $products->load('latestUpdated');
+        }
+
         return $this->sendResponse(new ProductsResource($products), 'Products updated successfully');
     }
 
@@ -114,9 +134,9 @@ class ProductsAPIController extends AppBaseController
      *
      * @param int $id
      *
+     * @return Response
      * @throws \Exception
      *
-     * @return Response
      */
     public function destroy($id)
     {

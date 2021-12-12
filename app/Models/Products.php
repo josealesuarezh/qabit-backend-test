@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as Model;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 
 /**
@@ -31,9 +32,6 @@ class Products extends Model
     public $fillable = [
         'name',
         'description',
-        'attributes',
-        'price',
-        'stock'
     ];
 
     /**
@@ -45,9 +43,6 @@ class Products extends Model
         'id' => 'integer',
         'name' => 'string',
         'description' => 'string',
-        'attributes' => 'array',
-        'price' => 'float',
-        'stock' => 'integer'
     ];
 
     /**
@@ -58,10 +53,28 @@ class Products extends Model
     public static $rules = [
         'name' => 'required|string|max:255',
         'description' => 'required|string',
-        'attributes' => 'required|string',
-        'price' => 'required|numeric',
-        'stock' => 'required|integer'
     ];
 
+    public function getTotalStockAttribute() {
+        return $this->variants()->sum('stock');
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function lowestPriceVariation(): HasOne
+    {
+        return $this->hasOne(ProductVariant::class,'product_id')->orderBy('price');
+    }
+
+    public function latestUpdated()
+    {
+        return $this->hasOne(ProductVariant::class,'product_id')->latest();
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class,'product_id','id');
+    }
 
 }
