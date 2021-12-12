@@ -21,3 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::resource('products', App\Http\Controllers\API\ProductsAPIController::class);
 Route::post('products/subscribe',[\App\Http\Controllers\API\WaitListApiController::class,'toggleSubscribe']);
+
+
+Route::post('products/{products}/product_variant', [App\Http\Controllers\API\ProductVariantAPIController::class,'store']);
+Route::delete('products/product_variant/{product_variant}', [App\Http\Controllers\API\ProductVariantAPIController::class,'destroy']);

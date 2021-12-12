@@ -18,6 +18,6 @@ class WaitList extends Model
      */
     public static $rules = [
         'email' => 'required|email',
-        'product_id' => 'required|exists:products,id',
+        'product_id' => 'required|exists:product_variants',
     ];
 }
